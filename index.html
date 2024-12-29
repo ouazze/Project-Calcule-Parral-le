@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfriStudent - AI Recommendation System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Yaldevi:wght@200..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="particles" id="particles-js"></div>
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='college.png') }}" alt="AfriStudent Logo">
+            <h1>AfriStudent</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#recommendation">Recommendation</a></li>
+                <li><a href="#team">Team</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div class="form-container">
+            <h2>Enter Your Academic Scores</h2>
+            <form id="prediction-form" action="{{ url_for('predict') }}" method="post">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="text" name="fullName" placeholder=" " required>
+                        <label>Full Name</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" name="Arabic" placeholder=" " required min="0" max="100">
+                        <label>Arabic</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="English" placeholder=" " required min="0" max="100">
+                        <label>English</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="French" placeholder=" " required min="0" max="100">
+                        <label>French</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" name="Mathematics" placeholder=" " required min="0" max="100">
+                        <label>Mathematics</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="Science" placeholder=" " required min="0" max="100">
+                        <label>Science</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="Religious Studies" placeholder=" " required min="0" max="100">
+                        <label>Religious Studies</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" name="Computer Science" placeholder=" " required min="0" max="100">
+                        <label>Computer Science</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="Philosophy" placeholder=" " required min="0" max="100">
+                        <label>Philosophy</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" name="Art" placeholder=" " required min="0" max="100">
+                        <label>Art</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" name="Social Studies" placeholder=" " required min="0" max="100">
+                        <label>Social Studies</label>
+                    </div>
+                </div>
+                <button type="submit" class="recommendation-button">Get Your Recommendation</button>
+            </form>
+            <div id="result" class="result-container"></div>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#ffffff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.5, random: false },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#ffffff',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: 'none',
+                    random: false,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false,
+                }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: { enable: true, mode: 'repulse' },
+                    onclick: { enable: true, mode: 'push' },
+                    resize: true
+                }
+            },
+            retina_detect: true
+        });
+
+        document.getElementById('prediction-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const button = this.querySelector('button[type="submit"]');
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            fetch('/predict', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                if (data.error) {
+                    const errorMessage = document.createElement('p');
+                    errorMessage.style.color = '#696969';
+                    errorMessage.textContent = data.error;
+                    resultContainer.appendChild(errorMessage);
+                } else {
+                    const fullName = new FormData(this).get('fullName');
+                    const recommendationMessage = document.createElement('p');
+                    recommendationMessage.style.color = '#4A4A4A';
+                    recommendationMessage.innerHTML = `Bonjour ${fullName}, Votre Recommandation Personnalisée : ${data.recommendation}.<br>Confidence Score: ${data.confidence}`;
+                    resultContainer.appendChild(recommendationMessage);
+                }
+                resultContainer.classList.add('show');
+            })
+            .catch(error => {
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+                const errorMessage = document.createElement('p');
+                errorMessage.style.color = '#696969';
+                errorMessage.textContent = `An error occurred: ${error}`;
+                resultContainer.appendChild(errorMessage);
+                resultContainer.classList.add('show');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = 'Get Your Recommendation';
+            });
+        });
+    </script>
+</body>
+</html>
